@@ -4,95 +4,322 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Find Your Wedding Table</title>
+  <meta name="theme-color" content="#faf7f2">
+  <title>Find Your Seat | Chaloemporn & Jacob</title>
+
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 24px 16px;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: Arial, "Noto Sans Thai", sans-serif;
       background: #faf7f2;
       color: #333;
-      margin: 0;
-      min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 20px;
-      box-sizing: border-box;
     }
+
     .card {
-      background: white;
+      width: 100%;
+      max-width: 440px;
       padding: 32px 24px;
-      border-radius: 16px;
-      box-shadow: 0 4px 20px #00000010;
-      max-width: 420px;
-      width: 100%;
-      box-sizing: border-box;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 5px 24px #00000010;
     }
-    h1 {
-      font-family: Georgia, serif;
-      font-weight: normal;
-      text-align: center;
+
+    .languages {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 28px;
     }
-    p { color: #666; text-align: center; }
-    input, button {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 14px;
-      font-size: 16px;
-      border-radius: 8px;
-      margin-top: 12px;
+
+    button, input {
+      font: inherit;
     }
-    input { border: 1px solid #ccc; }
-    button {
+
+    .languages button {
+      width: auto;
+      margin: 0;
+      padding: 9px 16px;
+      border: 1px solid #657b64;
+      border-radius: 20px;
+      color: #50644f;
+      background: white;
+      cursor: pointer;
+    }
+
+    .languages button.active {
       background: #657b64;
       color: white;
-      border: none;
-      cursor: pointer;
     }
-    .match {
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 12px;
-      margin-top: 10px;
-      cursor: pointer;
-      text-align: left;
+
+    h1 {
+      margin: 0 0 12px;
+      font-family: Georgia, "Noto Serif Thai", serif;
+      font-size: 32px;
+      font-weight: normal;
+      line-height: 1.35;
+      text-align: center;
+    }
+
+    .couple {
+      margin: 0 0 12px;
+      font-family: Georgia, serif;
+      font-size: 20px;
+      text-align: center;
+    }
+
+    .instruction {
+      margin: 0 0 22px;
+      color: #666;
+      line-height: 1.6;
+      text-align: center;
+    }
+
+    input {
+      display: block;
+      width: 100%;
+      padding: 15px;
+      border: 1px solid #ccc;
+      border-radius: 9px;
       background: white;
-      color: #333;
+      font-size: 17px;
     }
-    .match:hover { background: #f2f5f0; }
+
+    input:focus {
+      outline: 2px solid #657b64;
+      outline-offset: 2px;
+    }
+
+    .search-button {
+      display: block;
+      width: 100%;
+      margin-top: 12px;
+      padding: 15px;
+      border: 0;
+      border-radius: 9px;
+      background: #657b64;
+      color: white;
+      font-size: 17px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      filter: brightness(0.96);
+    }
+
+    .search-button:disabled {
+      opacity: 0.6;
+      cursor: wait;
+    }
+
+    #result {
+      margin-top: 24px;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
+
+    .message {
+      color: #666;
+      text-align: center;
+    }
+
+    .error {
+      color: #a33;
+      text-align: center;
+    }
+
+    .welcome {
+      text-align: center;
+      font-size: 19px;
+    }
+
+    .table-label {
+      margin: 12px 0 0;
+      text-align: center;
+      color: #666;
+    }
+
     .table-number {
       display: block;
-      text-align: center;
-      font-size: 48px;
+      margin-top: 4px;
       color: #657b64;
+      font-size: 46px;
       font-weight: bold;
-      margin-top: 8px;
+      text-align: center;
+      line-height: 1.3;
     }
-    #result { margin-top: 24px; }
-    .message { text-align: center; color: #666; }
-    .error { color: #a33; }
+
+    .suggestion {
+      display: block;
+      width: 100%;
+      margin-top: 9px;
+      padding: 14px;
+      border: 1px solid #ddd;
+      border-radius: 9px;
+      background: #fff;
+      color: #333;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .suggestion-name {
+      font-size: 17px;
+    }
+
+    .suggestion-table {
+      display: block;
+      margin-top: 3px;
+      color: #657b64;
+      font-size: 14px;
+    }
+
+    .footer {
+      margin-top: 24px;
+      color: #999;
+      font-size: 12px;
+      text-align: center;
+    }
   </style>
 </head>
+
 <body>
   <main class="card">
-    <h1>Welcome to Our Wedding</h1>
-    <p>Enter your name to find your table.</p>
+    <div class="languages" aria-label="Language">
+      <button type="button" id="englishButton"
+        class="active" onclick="setLanguage('en')">
+        English
+      </button>
+      <button type="button" id="thaiButton"
+        onclick="setLanguage('th')">
+        ภาษาไทย
+      </button>
+    </div>
+
+    <h1 id="heading">Find Your Seat</h1>
+    <p class="couple">Chaloemporn &amp; Jacob</p>
+    <p class="instruction" id="instruction">
+      Enter your name to find your table.
+    </p>
 
     <form id="lookupForm">
-      <input id="guestName" type="text"
+      <input
+        id="guestName"
+        type="text"
         placeholder="Enter your name"
-        autocomplete="name" required>
-      <button type="submit">Find My Table</button>
+        autocomplete="name"
+        required
+      >
+      <button class="search-button" id="searchButton" type="submit">
+        Find My Table
+      </button>
     </form>
 
     <div id="result" aria-live="polite"></div>
+
+    <p class="footer" id="footerText">
+      We look forward to celebrating with you.
+    </p>
   </main>
 
   <script>
-    let guests = [];
+    // --------------------------------------------------
+    // TRANSLATIONS
+    // --------------------------------------------------
 
-    // Read a CSV row, including fields enclosed in quotes.
+    const translations = {
+      en: {
+        heading: "Find Your Seat",
+        instruction: "Enter your name to find your table.",
+        placeholder: "Enter your name",
+        search: "Find My Table",
+        welcome: "Welcome",
+        table: "Your table is:",
+        select: "Select your name:",
+        notFound: "No matching name found. Try another spelling or ask a wedding host.",
+        loading: "Loading the guest list...",
+        loadError: "Could not load the guest list. Please try again later.",
+        empty: "Please enter your name.",
+        footer: "We look forward to celebrating with you.",
+        tableWord: "Table",
+        longTable: "Long table",
+        chooseHelp: "Choose the correct name and table below."
+      },
+      th: {
+        heading: "ค้นหาโต๊ะของคุณ",
+        instruction: "กรอกชื่อของคุณเพื่อค้นหาโต๊ะ",
+        placeholder: "กรอกชื่อของคุณ",
+        search: "ค้นหาโต๊ะ",
+        welcome: "ยินดีต้อนรับ",
+        table: "โต๊ะของคุณคือ",
+        select: "กรุณาเลือกชื่อของคุณ",
+        notFound: "ไม่พบชื่อที่ตรงกัน กรุณาลองสะกดชื่อใหม่หรือสอบถามเจ้าหน้าที่",
+        loading: "กำลังโหลดรายชื่อ...",
+        loadError: "ไม่สามารถโหลดรายชื่อได้ กรุณาลองใหม่อีกครั้ง",
+        empty: "กรุณากรอกชื่อของคุณ",
+        footer: "แล้วพบกันในวันงาน",
+        tableWord: "โต๊ะ",
+        longTable: "โต๊ะยาว",
+        chooseHelp: "เลือกชื่อและโต๊ะที่ถูกต้องด้านล่าง"
+      }
+    };
+
+    let currentLanguage = "en";
+    let guests = [];
+    let csvLoaded = false;
+    let csvError = false;
+
+    const result = document.getElementById("result");
+    const nameInput = document.getElementById("guestName");
+    const searchButton = document.getElementById("searchButton");
+
+    function setLanguage(lang) {
+      currentLanguage = lang;
+      const t = translations[lang];
+
+      document.documentElement.lang = lang;
+
+      document.getElementById("heading").textContent = t.heading;
+      document.getElementById("instruction").textContent = t.instruction;
+      nameInput.placeholder = t.placeholder;
+      searchButton.textContent = t.search;
+      document.getElementById("footerText").textContent = t.footer;
+
+      document.getElementById("englishButton")
+        .classList.toggle("active", lang === "en");
+      document.getElementById("thaiButton")
+        .classList.toggle("active", lang === "th");
+
+      // Refresh the message in the selected language.
+      if (csvError) {
+        showMessage(t.loadError, true);
+      } else if (!csvLoaded) {
+        showMessage(t.loading);
+      } else {
+        result.replaceChildren();
+      }
+    }
+
+    // --------------------------------------------------
+    // CSV PARSER
+    // Supports quoted fields and commas inside quotes.
+    // Expected header: Name,Table
+    // --------------------------------------------------
+
     function parseCSV(text) {
       const rows = [];
-      let row = [], field = "", quoted = false;
+      let row = [];
+      let field = "";
+      let quoted = false;
+
+      text = text.replace(/^\uFEFF/, "");
 
       for (let i = 0; i < text.length; i++) {
         const c = text[i];
@@ -113,8 +340,13 @@
           field = "";
         } else if (c === "\n" || c === "\r") {
           if (c === "\r" && text[i + 1] === "\n") i++;
+
           row.push(field);
-          if (row.some(v => v.trim() !== "")) rows.push(row);
+
+          if (row.some(value => value.trim() !== "")) {
+            rows.push(row);
+          }
+
           row = [];
           field = "";
         } else {
@@ -123,187 +355,310 @@
       }
 
       row.push(field);
-      if (row.some(v => v.trim() !== "")) rows.push(row);
 
-      if (rows.length < 2) return [];
+      if (row.some(value => value.trim() !== "")) {
+        rows.push(row);
+      }
 
-      const headers = rows.shift().map(v =>
-        v.replace(/^\uFEFF/, "").trim().toLowerCase()
+      if (rows.length < 2) {
+        throw new Error("CSV is empty.");
+      }
+
+      const headers = rows.shift().map(value =>
+        value.trim().toLowerCase()
       );
+
       const nameIndex = headers.indexOf("name");
       const tableIndex = headers.indexOf("table");
 
-      if (nameIndex < 0 || tableIndex < 0) {
+      if (nameIndex === -1 || tableIndex === -1) {
         throw new Error("CSV needs Name and Table columns.");
       }
 
-      return rows.map(r => ({
-        name: (r[nameIndex] || "").trim(),
-        table: (r[tableIndex] || "").trim()
-      })).filter(g => g.name && g.table);
+      return rows.map(row => ({
+        name: (row[nameIndex] || "").trim(),
+        table: (row[tableIndex] || "").trim()
+      })).filter(guest => guest.name && guest.table);
     }
 
-    function normalize(s) {
-  return s
-    .toLocaleLowerCase()
-    .normalize("NFC")
-    .replace(/[^\p{L}\p{N}\s]/gu, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
+    // --------------------------------------------------
+    // NAME NORMALIZATION
+    // Preserves Thai, English, and other Unicode letters.
+    // --------------------------------------------------
+
+    function normalize(value) {
+      return value
+        .toLocaleLowerCase()
+        .normalize("NFC")
+        .replace(/[^\p{L}\p{N}\s]/gu, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    // --------------------------------------------------
+    // FUZZY MATCHING
+    // Uses edit distance and supports Unicode characters.
+    // --------------------------------------------------
 
     function similarity(a, b) {
-      if (!a || !b) return 0;
       if (a === b) return 1;
+      if (!a || !b) return 0;
 
-      // Shortened names can match longer names:
-      // "Jon" can match "Jonathan".
+      // Permit a shortened name to match the beginning
+      // of a longer name, e.g. Jon -> Jonathan.
       if (a.length >= 3 && b.startsWith(a)) return 0.9;
       if (b.length >= 3 && a.startsWith(b)) return 0.9;
 
-      const previous = Array.from(
-        { length: b.length + 1 }, (_, i) => i
+      const aa = Array.from(a);
+      const bb = Array.from(b);
+
+      let previous = Array.from(
+        { length: bb.length + 1 },
+        (_, i) => i
       );
 
-      for (let i = 1; i <= a.length; i++) {
+      for (let i = 1; i <= aa.length; i++) {
         const current = [i];
-        for (let j = 1; j <= b.length; j++) {
+
+        for (let j = 1; j <= bb.length; j++) {
+          const cost = aa[i - 1] === bb[j - 1] ? 0 : 1;
+
           current[j] = Math.min(
             current[j - 1] + 1,
             previous[j] + 1,
-            previous[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+            previous[j - 1] + cost
           );
         }
-        previous.splice(0, previous.length, ...current);
+
+        previous = current;
       }
 
-      return 1 - previous[b.length] / Math.max(a.length, b.length);
+      return 1 - previous[bb.length] / Math.max(aa.length, bb.length);
     }
 
     function scoreName(query, fullName) {
       const q = normalize(query);
       const n = normalize(fullName);
 
+      if (!q || !n) return 0;
       if (q === n) return 1;
 
-      const qt = q.split(" ").filter(Boolean);
-      const nt = n.split(" ").filter(Boolean);
+      const queryWords = q.split(" ").filter(Boolean);
+      const nameWords = n.split(" ").filter(Boolean);
 
-      // Compare each typed word with the closest guest-name word.
-      const tokenScore = qt.reduce((sum, word) => {
-        return sum + Math.max(...nt.map(other =>
-          similarity(word, other)
-        ));
-      }, 0) / qt.length;
+      // Compare each entered word against the closest word
+      // in the stored guest name.
+      const wordScore = queryWords.reduce((total, word) => {
+        const best = Math.max(
+          ...nameWords.map(other => similarity(word, other))
+        );
+        return total + best;
+      }, 0) / queryWords.length;
 
-      // Also allow first/last-name order to differ.
-      const reversed = nt.slice().reverse().join(" ");
-      const fullScore = Math.max(
-        similarity(q, n),
-        similarity(q, reversed)
+      // Also compare the complete names, including reversed order.
+      const fullScore = similarity(q, n);
+      const reversedScore = similarity(
+        q,
+        nameWords.slice().reverse().join(" ")
       );
 
-      return Math.max(tokenScore, fullScore);
+      return Math.max(wordScore, fullScore, reversedScore);
     }
 
-    const result = document.getElementById("result");
+    // --------------------------------------------------
+    // RESULTS AND TABLE LABELS
+    // --------------------------------------------------
 
     function showMessage(message, isError = false) {
       result.replaceChildren();
+
       const p = document.createElement("p");
-      p.className = isError ? "message error" : "message";
+      p.className = isError ? "error" : "message";
       p.textContent = message;
+
       result.appendChild(p);
     }
 
+    function formatTable(table) {
+      const t = translations[currentLanguage];
+      const value = String(table).trim();
+
+      if (/^long\s*table\s*l$/i.test(value)) {
+        return t.longTable + " L";
+      }
+
+      if (/^long\s*table\s*r$/i.test(value)) {
+        return t.longTable + " R";
+      }
+
+      if (/^table\s*\d+$/i.test(value)) {
+        return t.tableWord + " " + value.replace(/^table\s*/i, "");
+      }
+
+      if (/^\d+$/.test(value)) {
+        return t.tableWord + " " + value;
+      }
+
+      return value;
+    }
+
     function showGuest(guest) {
+      const t = translations[currentLanguage];
       result.replaceChildren();
 
       const greeting = document.createElement("p");
-      greeting.textContent = "Welcome, " + guest.name + "!";
+      greeting.className = "welcome";
+      greeting.textContent = t.welcome + ", " + guest.name + "!";
 
       const label = document.createElement("p");
-      label.textContent = "Your table is:";
+      label.className = "table-label";
+      label.textContent = t.table;
 
       const number = document.createElement("span");
       number.className = "table-number";
-      number.textContent = guest.table;
+      number.textContent = formatTable(guest.table);
 
       result.append(greeting, label, number);
     }
 
-    // Load the CSV from the same published GitHub Pages folder.
-    fetch("guests.csv")
-      .then(response => {
-        if (!response.ok) throw new Error("Could not load guests.csv");
-        return response.text();
-      })
-      .then(text => {
-        guests = parseCSV(text);
-        if (!guests.length) throw new Error("No guests found in CSV.");
-        showMessage("Enter your name above (โปรดกรอกชื่อ (ชื่อเล่น)).");
-      })
-      .catch(() => {
-        showMessage(
-          "Could not load the guest list. Check that guests.csv is uploaded correctly.",
-          true
-        );
-      });
-
-    document.getElementById("lookupForm").addEventListener("submit", e => {
-      e.preventDefault();
-
-      if (!guests.length) {
-        showMessage("The guest list is still loading. Please try again.", true);
-        return;
-      }
-
-      const query = document.getElementById("guestName").value.trim();
-      if (!normalize(query)) {
-        showMessage("Please enter your name.", true);
-        return;
-      }
-
-      const matches = guests.map(guest => ({
-        guest,
-        score: scoreName(query, guest.name)
-      })).sort((a, b) => b.score - a.score);
-
-      // Exact match takes priority.
-      const exact = matches.filter(m =>
-        normalize(m.guest.name) === normalize(query)
-      );
-
-      if (exact.length === 1) {
-        showGuest(exact[0].guest);
-        return;
-      }
-
-      // Show likely matches instead of guessing a table.
-      const likely = matches.filter(m => m.score >= 0.52).slice(0, 5);
-
-      if (!likely.length) {
-        showMessage(
-          "No close match found. Try your full name or ask a wedding host.",
-          true
-        );
-        return;
-      }
-
+    function showSuggestions(matches) {
+      const t = translations[currentLanguage];
       result.replaceChildren();
+
       const heading = document.createElement("p");
-      heading.textContent = "Select your name:";
+      heading.className = "welcome";
+      heading.textContent = t.select;
       result.appendChild(heading);
 
-      likely.forEach(({ guest }) => {
+      const help = document.createElement("p");
+      help.className = "message";
+      help.textContent = t.chooseHelp;
+      result.appendChild(help);
+
+      matches.forEach(match => {
         const button = document.createElement("button");
         button.type = "button";
-        button.className = "match";
-        button.textContent = guest.name;
-        button.addEventListener("click", () => showGuest(guest));
+        button.className = "suggestion";
+
+        const name = document.createElement("span");
+        name.className = "suggestion-name";
+        name.textContent = match.guest.name;
+
+        const table = document.createElement("span");
+        table.className = "suggestion-table";
+        table.textContent = formatTable(match.guest.table);
+
+        button.append(name, table);
+
+        button.addEventListener("click", () => {
+          showGuest(match.guest);
+        });
+
         result.appendChild(button);
       });
+    }
+
+    // --------------------------------------------------
+    // SEARCH
+    // --------------------------------------------------
+
+    document.getElementById("lookupForm").addEventListener("submit", event => {
+      event.preventDefault();
+
+      const t = translations[currentLanguage];
+      const query = nameInput.value.trim();
+
+      if (!query) {
+        showMessage(t.empty, true);
+        return;
+      }
+
+      if (!csvLoaded) {
+        showMessage(
+          csvError ? t.loadError : t.loading,
+          true
+        );
+        return;
+      }
+
+      const normalizedQuery = normalize(query);
+
+      const exactMatches = guests.filter(guest =>
+        normalize(guest.name) === normalizedQuery
+      );
+
+      // An exact match is safe to show directly only if
+      // that name appears once in the guest list.
+      if (exactMatches.length === 1) {
+        showGuest(exactMatches[0]);
+        return;
+      }
+
+      // If a name occurs more than once, let the guest
+      // choose the correct table.
+      if (exactMatches.length > 1) {
+        showSuggestions(exactMatches);
+        return;
+      }
+
+      // Otherwise use fuzzy matching to suggest likely names.
+      const matches = guests
+        .map(guest => ({
+          guest,
+          score: scoreName(query, guest.name)
+        }))
+        .filter(match => match.score >= 0.45)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 6);
+
+      if (!matches.length) {
+        showMessage(t.notFound, true);
+        return;
+      }
+
+      showSuggestions(matches);
     });
+
+    // --------------------------------------------------
+    // LOAD THE CSV
+    // --------------------------------------------------
+
+    async function loadGuests() {
+      showMessage(translations[currentLanguage].loading);
+
+      try {
+        const response = await fetch("guests.csv", {
+          cache: "no-store"
+        });
+
+        if (!response.ok) {
+          throw new Error("Could not load guests.csv");
+        }
+
+        const csvText = await response.text();
+        guests = parseCSV(csvText);
+
+        if (!guests.length) {
+          throw new Error("No guest entries found.");
+        }
+
+        csvLoaded = true;
+        showMessage(
+          currentLanguage === "th"
+            ? "โหลดรายชื่อเรียบร้อยแล้ว กรุณากรอกชื่อ"
+            : "Guest list loaded. Enter your name above."
+        );
+      } catch (error) {
+        console.error(error);
+        csvError = true;
+        showMessage(translations[currentLanguage].loadError, true);
+      }
+    }
+
+    // Start in English. Guests can switch to Thai at any time.
+    setLanguage("en");
+    loadGuests();
   </script>
 </body>
 </html>
+
