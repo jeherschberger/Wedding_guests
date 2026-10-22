@@ -1,0 +1,307 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Find Your Wedding Table</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #faf7f2;
+      color: #333;
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .card {
+      background: white;
+      padding: 32px 24px;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px #00000010;
+      max-width: 420px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    h1 {
+      font-family: Georgia, serif;
+      font-weight: normal;
+      text-align: center;
+    }
+    p { color: #666; text-align: center; }
+    input, button {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 14px;
+      font-size: 16px;
+      border-radius: 8px;
+      margin-top: 12px;
+    }
+    input { border: 1px solid #ccc; }
+    button {
+      background: #657b64;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .match {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 10px;
+      cursor: pointer;
+      text-align: left;
+      background: white;
+      color: #333;
+    }
+    .match:hover { background: #f2f5f0; }
+    .table-number {
+      display: block;
+      text-align: center;
+      font-size: 48px;
+      color: #657b64;
+      font-weight: bold;
+      margin-top: 8px;
+    }
+    #result { margin-top: 24px; }
+    .message { text-align: center; color: #666; }
+    .error { color: #a33; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Welcome to Our Wedding</h1>
+    <p>Enter your name to find your table.</p>
+
+    <form id="lookupForm">
+      <input id="guestName" type="text"
+        placeholder="Enter your name"
+        autocomplete="name" required>
+      <button type="submit">Find My Table</button>
+    </form>
+
+    <div id="result" aria-live="polite"></div>
+  </main>
+
+  <script>
+    let guests = [];
+
+    // Read a CSV row, including fields enclosed in quotes.
+    function parseCSV(text) {
+      const rows = [];
+      let row = [], field = "", quoted = false;
+
+      for (let i = 0; i < text.length; i++) {
+        const c = text[i];
+
+        if (quoted) {
+          if (c === '"' && text[i + 1] === '"') {
+            field += '"';
+            i++;
+          } else if (c === '"') {
+            quoted = false;
+          } else {
+            field += c;
+          }
+        } else if (c === '"' && field === "") {
+          quoted = true;
+        } else if (c === ",") {
+          row.push(field);
+          field = "";
+        } else if (c === "\n" || c === "\r") {
+          if (c === "\r" && text[i + 1] === "\n") i++;
+          row.push(field);
+          if (row.some(v => v.trim() !== "")) rows.push(row);
+          row = [];
+          field = "";
+        } else {
+          field += c;
+        }
+      }
+
+      row.push(field);
+      if (row.some(v => v.trim() !== "")) rows.push(row);
+
+      if (rows.length < 2) return [];
+
+      const headers = rows.shift().map(v =>
+        v.replace(/^\uFEFF/, "").trim().toLowerCase()
+      );
+      const nameIndex = headers.indexOf("name");
+      const tableIndex = headers.indexOf("table");
+
+      if (nameIndex < 0 || tableIndex < 0) {
+        throw new Error("CSV needs Name and Table columns.");
+      }
+
+      return rows.map(r => ({
+        name: (r[nameIndex] || "").trim(),
+        table: (r[tableIndex] || "").trim()
+      })).filter(g => g.name && g.table);
+    }
+
+    function normalize(s) {
+      return s.toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9\s]/g, " ")
+        .replace(/\s+/g, " ").trim();
+    }
+
+    function similarity(a, b) {
+      if (!a || !b) return 0;
+      if (a === b) return 1;
+
+      // Shortened names can match longer names:
+      // "Jon" can match "Jonathan".
+      if (a.length >= 3 && b.startsWith(a)) return 0.9;
+      if (b.length >= 3 && a.startsWith(b)) return 0.9;
+
+      const previous = Array.from(
+        { length: b.length + 1 }, (_, i) => i
+      );
+
+      for (let i = 1; i <= a.length; i++) {
+        const current = [i];
+        for (let j = 1; j <= b.length; j++) {
+          current[j] = Math.min(
+            current[j - 1] + 1,
+            previous[j] + 1,
+            previous[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+          );
+        }
+        previous.splice(0, previous.length, ...current);
+      }
+
+      return 1 - previous[b.length] / Math.max(a.length, b.length);
+    }
+
+    function scoreName(query, fullName) {
+      const q = normalize(query);
+      const n = normalize(fullName);
+
+      if (q === n) return 1;
+
+      const qt = q.split(" ").filter(Boolean);
+      const nt = n.split(" ").filter(Boolean);
+
+      // Compare each typed word with the closest guest-name word.
+      const tokenScore = qt.reduce((sum, word) => {
+        return sum + Math.max(...nt.map(other =>
+          similarity(word, other)
+        ));
+      }, 0) / qt.length;
+
+      // Also allow first/last-name order to differ.
+      const reversed = nt.slice().reverse().join(" ");
+      const fullScore = Math.max(
+        similarity(q, n),
+        similarity(q, reversed)
+      );
+
+      return Math.max(tokenScore, fullScore);
+    }
+
+    const result = document.getElementById("result");
+
+    function showMessage(message, isError = false) {
+      result.replaceChildren();
+      const p = document.createElement("p");
+      p.className = isError ? "message error" : "message";
+      p.textContent = message;
+      result.appendChild(p);
+    }
+
+    function showGuest(guest) {
+      result.replaceChildren();
+
+      const greeting = document.createElement("p");
+      greeting.textContent = "Welcome, " + guest.name + "!";
+
+      const label = document.createElement("p");
+      label.textContent = "Your table is:";
+
+      const number = document.createElement("span");
+      number.className = "table-number";
+      number.textContent = guest.table;
+
+      result.append(greeting, label, number);
+    }
+
+    // Load the CSV from the same published GitHub Pages folder.
+    fetch("guests.csv")
+      .then(response => {
+        if (!response.ok) throw new Error("Could not load guests.csv");
+        return response.text();
+      })
+      .then(text => {
+        guests = parseCSV(text);
+        if (!guests.length) throw new Error("No guests found in CSV.");
+        showMessage("Guest list loaded. Enter your name above.");
+      })
+      .catch(() => {
+        showMessage(
+          "Could not load the guest list. Check that guests.csv is uploaded correctly.",
+          true
+        );
+      });
+
+    document.getElementById("lookupForm").addEventListener("submit", e => {
+      e.preventDefault();
+
+      if (!guests.length) {
+        showMessage("The guest list is still loading. Please try again.", true);
+        return;
+      }
+
+      const query = document.getElementById("guestName").value.trim();
+      if (!normalize(query)) {
+        showMessage("Please enter your name.", true);
+        return;
+      }
+
+      const matches = guests.map(guest => ({
+        guest,
+        score: scoreName(query, guest.name)
+      })).sort((a, b) => b.score - a.score);
+
+      // Exact match takes priority.
+      const exact = matches.filter(m =>
+        normalize(m.guest.name) === normalize(query)
+      );
+
+      if (exact.length === 1) {
+        showGuest(exact[0].guest);
+        return;
+      }
+
+      // Show likely matches instead of guessing a table.
+      const likely = matches.filter(m => m.score >= 0.52).slice(0, 5);
+
+      if (!likely.length) {
+        showMessage(
+          "No close match found. Try your full name or ask a wedding host.",
+          true
+        );
+        return;
+      }
+
+      result.replaceChildren();
+      const heading = document.createElement("p");
+      heading.textContent = "Select your name:";
+      result.appendChild(heading);
+
+      likely.forEach(({ guest }) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "match";
+        button.textContent = guest.name;
+        button.addEventListener("click", () => showGuest(guest));
+        result.appendChild(button);
+      });
+    });
+  </script>
+</body>
+</html>
