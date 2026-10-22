@@ -144,11 +144,13 @@
     }
 
     function normalize(s) {
-      return s.toLowerCase()
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-z0-9\s]/g, " ")
-        .replace(/\s+/g, " ").trim();
-    }
+  return s
+    .toLocaleLowerCase()
+    .normalize("NFC")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
     function similarity(a, b) {
       if (!a || !b) return 0;
