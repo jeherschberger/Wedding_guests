@@ -642,12 +642,7 @@
           throw new Error("No guest entries found.");
         }
 
-        csvLoaded = true;
-        showMessage(
-          currentLanguage === "th"
-            ? "โหลดรายชื่อเรียบร้อยแล้ว กรุณากรอกชื่อ"
-            : "Guest list loaded. Enter your name above."
-        );
+
       } catch (error) {
         console.error(error);
         csvError = true;
