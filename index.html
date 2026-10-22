@@ -239,7 +239,7 @@
       .then(text => {
         guests = parseCSV(text);
         if (!guests.length) throw new Error("No guests found in CSV.");
-        showMessage("Guest list loaded. Enter your name above.");
+        showMessage("Enter your name above (โปรดกรอกชื่อ (ชื่อเล่น)).");
       })
       .catch(() => {
         showMessage(
